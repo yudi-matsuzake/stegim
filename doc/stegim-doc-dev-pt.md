@@ -33,7 +33,6 @@ A função steg é a função que irá esteganografar os textos nas imagens.
 stegim steg [OPÇÕES] <img.jpg> [img0.jpg ... ] ] [texto.txt]
 stegim steg --foreach-img-txt <img.jpg> <texto.txt> [img.jpg texto.txt ...]
 stegim steg --nleast-significant-bit N <img.jpg> [img0.jpg ... ] ] [texto.txt]
-stegim steg --n-channel N <img.jpg> [img0.jpg ... ] ] [texto.txt]
 stegim steg --channels CHANNEL_STRING [img0.jpg ... ] ] [texto.txt]
 ```
 
@@ -54,8 +53,6 @@ Exemplos:
 
 `-b` ou `--nleast-significant-bit` Seta o número de bits menos significativos que serão usados na esteganografia.
 
-`-c` ou `--n-channel` Seta o número de canais que serão usados.
-
 `-C` ou `--channels` Altera os canais quer serão usados.
 
 ### info
@@ -67,20 +64,31 @@ Função que irá exibir informações interessantes e úteis - no contexto da e
 
 * Resolução da imagem;
 
+*USAGE*
+
+```shell
+stegim info --nleast-significant-bit N <img.jpg> [img0.jpg ...]
+```
+
 *OPÇÕES*
 
 `-b` ou `--nleast-significant-bit` Seta o número de bits menos significativos que serão usados na esteganografia.
-
-`-c` ou `--n-channel` Seta o número de canais que serão usados.
 
 `-C` ou `--channels` Altera os canais quer serão usados.
 
 ### x
 ----
 
+Irá extrair o texto escondido da imagem.
+
 ```shell
 stegim x [OPÇÕES] <img.jpg> [img1.jpg ... ]
 stegim x -O saida.txt <img.jpg>
 ```
 
-Irá extrair o texto escondido da imagem.
+
+*OPÇÕES*
+
+`-b` ou `--nleast-significant-bit` Seta o número de bits menos significativos que serão usados na esteganografia.
+
+`-C` ou `--channels` Altera os canais quer serão usados.

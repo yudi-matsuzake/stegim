@@ -32,3 +32,9 @@
 *.swp
 *.vim
 .ycm_extra_conf.py*
+
+#local-tests
+test/
+
+#binary
+bin/
