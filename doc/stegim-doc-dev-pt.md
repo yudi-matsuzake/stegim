@@ -49,6 +49,7 @@ Exemplos:
 - `---` - Não usa nenhum canal (errado!)
 
 *OPÇÕES*
+
 `-F` ou `--foreach-img-txt` Para cada imagem, esconde um .txt
 
 `-b` ou `--nleast-significant-bit` Seta o número de bits menos significativos que serão usados na esteganografia.
