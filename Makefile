@@ -37,3 +37,7 @@ print_info:
 	@echo "HEADERS_PATH: ${HEADERS_PATH}"
 	@echo "ALL_CPP_FILES: ${ALL_CPP_FILES}"
 	@echo "ALL_HPP_FILES: ${ALL_HPP_FILES}" 
+#----------------------------------------------------------
+
+nlines:
+	find -regextype awk -regex '.*\.[ch]pp' | xargs wc -l
