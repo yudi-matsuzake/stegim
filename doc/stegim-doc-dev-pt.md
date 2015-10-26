@@ -11,6 +11,14 @@ Programa simples para esteganografia em imagens.
 
 * Os primeiro 4 bytes alterados vai ser um inteiro indicando quantos caracteres esteganografados existem na imagem;
 
+## Linguagem
+
+* Comentários: português
+
+* Strings no programa: inglês
+
+* README.md: inglês
+
 ## Comandos principais
 ----------------------
 

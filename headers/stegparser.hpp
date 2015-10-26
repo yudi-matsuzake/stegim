@@ -13,7 +13,7 @@
 #define STEGIM_VERSION 			STEGIM_TITLE " 0.0"
 #define STEGIM_PROGRAM_BUG_ADDRESS 	"<www.github.com/yudi-matsuzake/stegim>"
 #define STEGIM_DOC\
-	"stegim - A simple tool for ascii stenography images."
+	"stegim - A simple tool to hide ascii text in images."
 
 #define STEGIM_STEG_DOC\
 	"stegimg steg - Command to realize the image stenography."
@@ -26,21 +26,20 @@
 
 //--USAGES-------------------------------------------------
 #define STEGIM_STEG_USAGE\
-	"steg [OPTIONS] <img.jpg>\n"\
-	"steg -F <img.jpg> <text.txt> [img.jpg text.txt ...]"\
+	"[OPTIONS] <img.jpg>\n"\
+	"-F <img.jpg> <text.txt> [img.jpg text.txt ...]"\
 
 #define STEGIM_INFO_USAGE\
-	"info [OPTIONS] <img.jpg>\n"\
-	"info -b N <img.jpg> [img0.jpg ...]"
+	"[OPTIONS] <img.jpg>\n"\
+	"-b N <img.jpg> [img0.jpg ...]"
 
 #define STEGIM_X_USAGE\
-	"x [OPTIONS] <img.jpg> [img1.jpg ... ]\n"\
-	"x -O saida.txt <img.jpg>\n"\
-	"x -C CHANNEL_STRING <img.jpg> [img0.jpg ...]"
+	"[OPTIONS] <img.jpg> [img1.jpg ... ]\n"\
+	"-O saida.txt <img.jpg>\n"\
+	"-C CHANNEL_STRING <img.jpg> [img0.jpg ...]"
 
 #define STEGIM_USAGE\
-	"[<command> [command OPTIONS] <img.jpg>]\n"\
-	STEGIM_STEG_USAGE "\n" STEGIM_INFO_USAGE "\n" STEGIM_X_USAGE
+	"[<command> [command OPTIONS] <img.jpg>]"
 
 
 //--STEGIM ARGS CLASSES---------------------------------------
@@ -62,9 +61,9 @@ public:
 //--STEG ARGS----------------------------------------------
 class StegArgs: public StegimArgs{
 public:
-	StegArgs(): command(STEG){}
+	StegArgs(){}
 	~StegArgs(){}
-}
+};
 
 //--STEGPARSER CLASS---------------------------------------
 class StegParser{
