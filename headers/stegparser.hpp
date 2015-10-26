@@ -43,12 +43,28 @@
 	STEGIM_STEG_USAGE "\n" STEGIM_INFO_USAGE "\n" STEGIM_X_USAGE
 
 
-//--STEGARGS CLASS  ---------------------------------------
-class StegArgs{
+//--STEGIM ARGS CLASSES---------------------------------------
+typedef enum { STEG, INFO, X } steg_command;
+class StegimArgs{
 public:
-	bool B, G, R; 			//holds whether use the R or G or B channels
-	short n_least_significant_bit; 	//holds the number of bits that will be used
+	StegimArgs():	B(true), G(true), R(true), verbosity(false),
+			n_least_significant_bit(2){}
+
+
+	~StegimArgs(){}
+
+	steg_command command; 		//Guarda qual comando foi acionado
+	bool B, G, R; 			//Guarda os canais que serão usado para a esteganografia
+	bool verbosity;			//Guarda se o programa vai executar no modo verboso ou não
+	short n_least_significant_bit; 	//Número de bits menos significativos que serão usados
 };
+
+//--STEG ARGS----------------------------------------------
+class StegArgs: public StegimArgs{
+public:
+	StegArgs(): command(STEG){}
+	~StegArgs(){}
+}
 
 //--STEGPARSER CLASS---------------------------------------
 class StegParser{
@@ -57,15 +73,25 @@ private:
 	char** argv;
 	struct argp stegim_argp, steg_argp, info_argp, x_argp; //holds the argp's struct
 
-	void argp_constroy();	//constroi the argp variables
-	void parse();		//parses the argc and argv
+	void argp_constroy();	//Constrói as variáveis do argp
+	void parse();		//Parseia os comandos
+
+	StegimArgs* args;
+
+	static void cmd_scheduler(struct argp_state* state, steg_command comm);
+
+	//PARSERS for each command (stegim inclued)
+	static error_t stegim_parser(int key, char* arg, struct argp_state* state);
+	static error_t steg_parser(int key, char* arg, struct argp_state* state);
+	static error_t info_parser(int key, char* arg, struct argp_state* state);
+	static error_t x_parser(int key, char* arg, struct argp_state* state);
 public:
 	//constructor & destructor
 	StegParser(int argc, char* argv[]);
 	~StegParser();
 	
-	//get a StegArgs class based on the argc and argv
-	StegArgs get_args();
+	//Retorna a classe StegimArgs baseada nos argumentos dados
+	StegimArgs get_args();
 };
 
 #endif //_STEGIM_HPP_

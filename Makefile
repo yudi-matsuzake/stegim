@@ -1,7 +1,11 @@
 all: stegim
 
 #----------------------------------------------------------
+ifeq ($(DEBUG),ON)
 DEBUG_FLAG=-DNDEBUG=2 -DDEBUG_COLOR_ENABLE
+else
+DEBUG_FLAG=
+endif
 
 #----------------------------------------------------------
 GCC_FLAGS=-Wall -Wextra -O3
@@ -27,7 +31,7 @@ ${BIN_PATH}:
 		mkdir ${BIN_PATH}
 
 #----------------------------------------------------------
-DEBUG:
+print_info:
 	@echo "GCC_FLAGS: ${GCC_FLAGS}"
 	@echo "SOURCES_PATH: ${SOURCES_PATH}"
 	@echo "HEADERS_PATH: ${HEADERS_PATH}"
