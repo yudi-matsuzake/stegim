@@ -13,6 +13,10 @@
 const char *argp_program_version = STEGIM_VERSION;
 const char *argp_program_bug_address = STEGIM_PROGRAM_BUG_ADDRESS;
 
+//PARSER ERRORS
+#define BGR_STRING_ERROR "invalid BGR_STRING\n"
+#define NLEAST_SIGNIFICANT_BIT_ERROR "invalid argument for the least_significant_bit\n"
+
 //-STEG OPTIONS--------------------------------------------
 static struct argp_option steg_options[] = {STEGIM_STEG_OPTIONS, {0,0,0,0,0,0}};
 
@@ -26,7 +30,7 @@ static struct argp_option x_options[] = {STEGIM_X_OPTIONS, {0,0,0,0,0,0}};
 static struct argp_option stegim_options[] = {STEGIM_OPTIONS, {0,0,0,0,0,0}};
 
 //--STEG PARSER--------------------------------------------
-StegParser::StegParser(int argc, char** argv){
+StegParser::StegParser(int argc, char** argv): args(NULL) {
 	DEBUG("",1);
 
 	this->argc = argc;
@@ -37,12 +41,22 @@ StegParser::StegParser(int argc, char** argv){
 
 	DEBUG("parse", 2);
 	parse();
+	DEBUG("Construído",1);
 }
 
-StegParser::~StegParser(){}
+StegParser::~StegParser(){
+	if(args!=NULL)
+		delete args;
+}
 
-StegimArgs StegParser::get_args(){
-	return *args;
+StegimArgs* StegParser::get_args(){
+	return args;
+}
+
+void StegimArgs::set_bgr(bool B, bool G, bool R){
+	this->B = B;
+	this->G = G;
+	this->R = R;
 }
 
 //--ARGP_CONSTROY------------------------------------------
@@ -118,14 +132,17 @@ void StegParser::cmd_scheduler( struct argp_state* state, steg_command comm){
 		case STEG:
 			comm_name = STEG_NAME;
 			comm_argp = &steg_parser->steg_argp;
+			steg_parser->args = new StegArgs();
 			break;
 		case INFO:
 			comm_name = INFO_NAME;
 			comm_argp = &steg_parser->info_argp;
+			steg_parser->args = new InfoArgs();
 			break;
 		case X:
 			comm_name = X_NAME;
 			comm_argp = &steg_parser->x_argp;
+			steg_parser->args = new XArgs();
 			break;
 		default:
 			argp_error(state, "%x command is not valid\n", comm);
@@ -141,14 +158,17 @@ void StegParser::cmd_scheduler( struct argp_state* state, steg_command comm){
 
 	free (argv[0]);
 
-
 	argv[0] = argv0;
+
+	state->next += argc - 1;
 
 }
 
 //PARSERS
 //stegim parser
 error_t StegParser::stegim_parser(int key, char* arg, struct argp_state* state){
+	DEBUG("", 3);
+	DEBUG("a chave é " << key << " = (char)" << (char) key, 3);
 	switch(key){
 		case ARGP_KEY_ARG:
 			if(arg != NULL){
@@ -167,31 +187,154 @@ error_t StegParser::stegim_parser(int key, char* arg, struct argp_state* state){
 
 			}
 
+			break;
 		default:
 			return ARGP_ERR_UNKNOWN;
 	}
 	return 0;
 }
 
+
+//--FUNÇÕES AUXILIARES-------------------------------------
+void channel_arg_parser(StegParser* steg_parser, char* arg, struct argp_state* state){
+	//ponteiro é nulo?
+	if(!arg)
+		argp_error(state, BGR_STRING_ERROR);
+	int bgr_size = strlen(arg);
+	
+	//BGR_STRING deve ter tamanho 3
+	if(bgr_size != 3)
+		argp_error(state, BGR_STRING_ERROR);
+
+	bool bool_BGR[3];
+	char BGR[3] = {'B', 'G', 'R'};
+
+	for(int i=0; i<bgr_size; i++){
+		if(arg[i] == BGR[i])
+			bool_BGR[i] = true;
+		else if(arg[i] == '-')
+			bool_BGR[i] = false;
+		else
+			argp_error(state, BGR_STRING_ERROR);
+	}
+
+	if( !bool_BGR[0] && !bool_BGR[1] && !bool_BGR[2] )
+		argp_error(state, BGR_STRING_ERROR);
+	
+	steg_parser->get_args()->set_bgr(bool_BGR[0], bool_BGR[1], bool_BGR[2]);
+}
+
+//default options parser
+void StegParser::default_options_parser(int key, char* arg, struct argp_state* state){
+	DEBUG("", 3);
+	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+
+	switch(key){
+		//verbosity off
+		case 'q':
+			steg_parser->args->verbose = false;
+			break;
+		//verbosity on
+		case 'v':
+			steg_parser->args->verbose = true;
+			break;
+		//channels
+		case 'C':
+			channel_arg_parser(steg_parser, arg, state);
+		break;
+
+		//least significant bit
+		case 'b':
+			if(!arg) argp_error(state, NLEAST_SIGNIFICANT_BIT_ERROR);
+			steg_parser->args->n_least_significant_bit = atoi(arg);
+		break;
+	}
+}
+
+//is_default_opt
+bool is_default_opt(int key){
+	DEBUG("", 3);
+	return key == 'C' || key == 'b' || key == 'q' || key == 'v'; 
+}
+
 //steg parser
 error_t StegParser::steg_parser(int key, char* arg, struct argp_state* state){
-	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+	DEBUG("", 3);
+	if(is_default_opt(key))
+		default_options_parser(key, arg, state);
 	return 0;
 }
 
 //info parser
 error_t StegParser::info_parser(int key, char* arg, struct argp_state* state){
-	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+	DEBUG("", 3);
+	if(is_default_opt(key))
+		default_options_parser(key, arg, state);
 	return 0;
 }
 
 //x parser
 error_t StegParser::x_parser(int key, char* arg, struct argp_state* state){
-	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+	DEBUG("", 3);
+	if(is_default_opt(key))
+		default_options_parser(key, arg, state);
 	return 0;
 }
 
 void StegParser::parse(){
-	DEBUG("", 2);
+	DEBUG("", 3);
 	argp_parse(&stegim_argp, argc, argv, ARGP_IN_ORDER, 0, this);
+}
+
+//--OPERATORS----------------------------------------------
+std::ostream& operator<< (std::ostream& stream, const StegimArgs& args){
+	DEBUG("", 3);
+	//command
+	string command;
+	if(!args.command){
+		command = "None";
+	}else if(args.command == STEG){
+		command = "steg";
+	}else if(args.command == INFO){
+		command = "info";
+	}else if(args.command == X){
+		command = "x";
+	}else{
+		command = "Unknown";
+	}
+
+	stream << "Command: " << command << endl;
+	
+	//Canais sendo usados
+	stream << "Channels: ";
+	stream << ((args.B)?"B ":"");
+	stream << ((args.G)?"G ":"");
+	stream << ((args.R)?"R ":"");
+	stream << endl;
+
+	//Bits menos significativos
+	stream << "Least significant bits: " << args.n_least_significant_bit << endl;
+	
+	return stream;
+}
+
+std::ostream& operator<< (std::ostream& stream, const StegArgs& args){
+	DEBUG("", 3);
+	stream << static_cast<const StegimArgs&>(args);
+
+	return stream;
+}
+
+std::ostream& operator<< (std::ostream& stream, const InfoArgs& args){
+	DEBUG("", 3);
+	stream << static_cast<const StegimArgs&>(args);
+
+	return stream;
+}
+
+std::ostream& operator<< (std::ostream& stream, const XArgs& args){
+	DEBUG("", 3);
+	stream << static_cast<const StegimArgs&>(args);
+
+	return stream;
 }

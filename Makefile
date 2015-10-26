@@ -2,7 +2,7 @@ all: stegim
 
 #----------------------------------------------------------
 ifeq ($(DEBUG),ON)
-DEBUG_FLAG=-DNDEBUG=2 -DDEBUG_COLOR_ENABLE
+DEBUG_FLAG=-DNDEBUG=3 -DDEBUG_COLOR_ENABLE
 else
 DEBUG_FLAG=
 endif

@@ -20,19 +20,19 @@
  *  6 - (int)		Grupo
  *  *******************************************************/
 //--STEGIM-------------------------------------------------
-//VERBOSITY
-#define OPT_VERBOSITY 		"verbosity", 'v' //1 e 2
-#define OPT_VERBOSITY_ARG	0		//3
-#define OPT_VERBOSITY_FLAGS	0		//4
-#define OPT_VERBOSITY_DOC	"Enable verbosity mode" //5
-#define OPT_VERBOSITY_GROUP	0	//6
-#define VERBOSITY_OPT		{OPT_VERBOSITY, OPT_VERBOSITY_ARG, OPT_VERBOSITY_FLAGS, OPT_VERBOSITY_DOC, OPT_VERBOSITY_GROUP}
+//VERBOSE
+#define OPT_VERBOSE 		"verbose", 'v' //1 e 2
+#define OPT_VERBOSE_ARG		0		//3
+#define OPT_VERBOSE_FLAGS	0		//4
+#define OPT_VERBOSE_DOC		"Enable verbose mode" //5
+#define OPT_VERBOSE_GROUP	0	//6
+#define VERBOSE_OPT		{OPT_VERBOSE, OPT_VERBOSE_ARG, OPT_VERBOSE_FLAGS, OPT_VERBOSE_DOC, OPT_VERBOSE_GROUP}
 
 //QUIET
 #define OPT_QUIET 		"quiet", 'q' //1 e 2
 #define OPT_QUIET_ARG		0		//3
 #define OPT_QUIET_FLAGS		0		//4
-#define OPT_QUIET_DOC		"Disable verbosity mode" //5
+#define OPT_QUIET_DOC		"Disable verbose mode" //5
 #define OPT_QUIET_GROUP		0		//6
 #define QUIET_OPT		{OPT_QUIET, OPT_QUIET_ARG, OPT_QUIET_FLAGS, OPT_QUIET_DOC, OPT_QUIET_GROUP}
 
@@ -67,7 +67,7 @@
 
 //DEFAULT OPTIONS (todos os comandos terão)
 #define STEGIM_DEFAULT_OPTION\
-	CHANNELS_OPT, NLEAST_SB_OPT
+	CHANNELS_OPT, NLEAST_SB_OPT, VERBOSE_OPT, QUIET_OPT 
 
 //STEG
 #define STEG_NAME "steg"
@@ -82,7 +82,7 @@
 #define STEGIM_X_OPTIONS {0,0,0,0,"Command "X_NAME,0}, STEGIM_DEFAULT_OPTION
 
 //STEGIM
-#define STEGIM_OPTIONS VERBOSITY_OPT, QUIET_OPT, STEGIM_STEG_OPTIONS, STEGIM_INFO_OPTIONS, STEGIM_X_OPTIONS
+#define STEGIM_OPTIONS STEGIM_STEG_OPTIONS, STEGIM_INFO_OPTIONS, STEGIM_X_OPTIONS
 
 
 #endif //_STEGOPTIONS_HPP

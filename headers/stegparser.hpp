@@ -43,26 +43,58 @@
 
 
 //--STEGIM ARGS CLASSES---------------------------------------
-typedef enum { STEG, INFO, X } steg_command;
+typedef enum { NONE, STEG, INFO, X } steg_command;
 class StegimArgs{
 public:
-	StegimArgs():	B(true), G(true), R(true), verbosity(false),
-			n_least_significant_bit(2){}
+	StegimArgs(steg_command command = NONE):B(true), G(true), R(true),
+						verbose(false),
+						n_least_significant_bit(2){
+		this->command = command;
+	}
 
 
 	~StegimArgs(){}
 
-	steg_command command; 		//Guarda qual comando foi acionado
+	steg_command command; 	//Guarda qual comando foi acionado
 	bool B, G, R; 			//Guarda os canais que serão usado para a esteganografia
-	bool verbosity;			//Guarda se o programa vai executar no modo verboso ou não
+	bool verbose;			//Guarda se o programa vai executar no modo verboso ou não
 	short n_least_significant_bit; 	//Número de bits menos significativos que serão usados
+
+	//set bgr
+	void set_bgr(bool B, bool G, bool R);
+
+	//operators
+	friend std::ostream& operator<< (std::ostream& stream, const StegimArgs& args);
 };
 
 //--STEG ARGS----------------------------------------------
 class StegArgs: public StegimArgs{
 public:
-	StegArgs(){}
+	StegArgs():StegimArgs(STEG){}
 	~StegArgs(){}
+
+	//operators
+	friend std::ostream& operator<< (std::ostream& stream, const StegArgs& args);
+};
+
+//--INFO ARGS----------------------------------------------
+class InfoArgs: public StegimArgs{
+public:
+	InfoArgs():StegimArgs(INFO){}
+	~InfoArgs(){}
+
+	//operators
+	friend std::ostream& operator<< (std::ostream& stream, const InfoArgs& args);
+};
+
+//--X ARGS----------------------------------------------
+class XArgs: public StegimArgs{
+public:
+	XArgs():StegimArgs(X){}
+	~XArgs(){}
+
+	//operators
+	friend std::ostream& operator<< (std::ostream& stream, const XArgs& args);
 };
 
 //--STEGPARSER CLASS---------------------------------------
@@ -80,6 +112,7 @@ private:
 	static void cmd_scheduler(struct argp_state* state, steg_command comm);
 
 	//PARSERS for each command (stegim inclued)
+	static void default_options_parser(int key, char* arg, struct argp_state* state);
 	static error_t stegim_parser(int key, char* arg, struct argp_state* state);
 	static error_t steg_parser(int key, char* arg, struct argp_state* state);
 	static error_t info_parser(int key, char* arg, struct argp_state* state);
@@ -88,9 +121,10 @@ public:
 	//constructor & destructor
 	StegParser(int argc, char* argv[]);
 	~StegParser();
+
 	
 	//Retorna a classe StegimArgs baseada nos argumentos dados
-	StegimArgs get_args();
+	StegimArgs* get_args();
 };
 
 #endif //_STEGIM_HPP_
