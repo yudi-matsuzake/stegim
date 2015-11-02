@@ -132,17 +132,44 @@ void StegParser::cmd_scheduler( struct argp_state* state, steg_command comm){
 		case STEG:
 			comm_name = STEG_NAME;
 			comm_argp = &steg_parser->steg_argp;
-			steg_parser->args = new StegArgs();
+
+			//se existe um parser já, cria um com base nesse,
+				//senão cria um totalmente novo
+			if(steg_parser->args != NULL){
+				StegimArgs* last_parser = steg_parser->args;
+				steg_parser->args = new StegArgs(*last_parser);
+				delete last_parser;
+			}else{
+				steg_parser->args = new StegArgs();
+			}
 			break;
 		case INFO:
 			comm_name = INFO_NAME;
 			comm_argp = &steg_parser->info_argp;
-			steg_parser->args = new InfoArgs();
+
+			//se existe um parser já, cria um com base nesse,
+				//senão cria um totalmente novo
+			if(steg_parser->args != NULL){
+				StegimArgs* last_parser = steg_parser->args;
+				steg_parser->args = new InfoArgs(*last_parser);
+				delete last_parser;
+			}else{
+				steg_parser->args = new InfoArgs();
+			}
 			break;
 		case X:
 			comm_name = X_NAME;
 			comm_argp = &steg_parser->x_argp;
-			steg_parser->args = new XArgs();
+
+			//se existe um parser já, cria um com base nesse,
+				//senão cria um totalmente novo
+			if(steg_parser->args != NULL){
+				StegimArgs* last_parser = steg_parser->args;
+				steg_parser->args = new XArgs(*last_parser);
+				delete last_parser;
+			}else{
+				steg_parser->args = new XArgs();
+			}
 			break;
 		default:
 			argp_error(state, "%x command is not valid\n", comm);
@@ -169,7 +196,18 @@ void StegParser::cmd_scheduler( struct argp_state* state, steg_command comm){
 error_t StegParser::stegim_parser(int key, char* arg, struct argp_state* state){
 	DEBUG("", 3);
 	DEBUG("a chave é " << key << " = (char)" << (char) key, 3);
+	StegParser* parser = static_cast<StegParser*>(state->input);
 	switch(key){
+		//verbosity off
+		case 'q':
+			parser->args = new StegimArgs();
+			parser->args->verbose = false;
+			break;
+		//verbosity on
+		case 'v':
+			parser->args = new StegimArgs();
+			parser->args->verbose = true;
+			break;
 		case ARGP_KEY_ARG:
 			if(arg != NULL){
 
@@ -230,14 +268,6 @@ void StegParser::default_options_parser(int key, char* arg, struct argp_state* s
 	StegParser* steg_parser = static_cast<StegParser*>(state->input);
 
 	switch(key){
-		//verbosity off
-		case 'q':
-			steg_parser->args->verbose = false;
-			break;
-		//verbosity on
-		case 'v':
-			steg_parser->args->verbose = true;
-			break;
 		//channels
 		case 'C':
 			channel_arg_parser(steg_parser, arg, state);
@@ -254,7 +284,7 @@ void StegParser::default_options_parser(int key, char* arg, struct argp_state* s
 //is_default_opt
 bool is_default_opt(int key){
 	DEBUG("", 3);
-	return key == 'C' || key == 'b' || key == 'q' || key == 'v'; 
+	return key == 'C' || key == 'b';
 }
 
 //steg parser

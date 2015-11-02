@@ -46,12 +46,20 @@
 typedef enum { NONE, STEG, INFO, X } steg_command;
 class StegimArgs{
 public:
+	//---------------------------------------------------------
 	StegimArgs(steg_command command = NONE):B(true), G(true), R(true),
 						verbose(false),
-						n_least_significant_bit(2){
+						n_least_significant_bit(2)
+	{
 		this->command = command;
 	}
 
+	//---------------------------------------------------------
+	StegimArgs(const StegimArgs& s):command(s.command),
+					B(s.B), G(s.G), R(s.R),
+					verbose(s.verbose),
+					n_least_significant_bit(s.n_least_significant_bit)
+	{}
 
 	~StegimArgs(){}
 
@@ -71,6 +79,7 @@ public:
 class StegArgs: public StegimArgs{
 public:
 	StegArgs():StegimArgs(STEG){}
+	StegArgs(const StegimArgs& s):StegimArgs(s){ this->command = STEG; }
 	~StegArgs(){}
 
 	//operators
@@ -81,6 +90,7 @@ public:
 class InfoArgs: public StegimArgs{
 public:
 	InfoArgs():StegimArgs(INFO){}
+	InfoArgs(const StegimArgs& s):StegimArgs(s){ this->command = INFO; }
 	~InfoArgs(){}
 
 	//operators
@@ -91,6 +101,7 @@ public:
 class XArgs: public StegimArgs{
 public:
 	XArgs():StegimArgs(X){}
+	XArgs(const StegimArgs& s):StegimArgs(s){ this->command = X; }
 	~XArgs(){}
 
 	//operators
