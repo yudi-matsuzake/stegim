@@ -2,13 +2,14 @@ all: stegim
 
 #----------------------------------------------------------
 ifeq ($(DEBUG),ON)
-DEBUG_FLAG=-DNDEBUG=3 -DDEBUG_COLOR_ENABLE
+DEBUG_FLAG=-DNDEBUG=-1 -DDEBUG_COLOR_ENABLE
 else
 DEBUG_FLAG=
 endif
 
 #----------------------------------------------------------
 GCC_FLAGS=-Wall -Wextra -O3
+OPENCV_FLAGS:=$(shell pkg-config opencv --cflags --libs)
 
 #----------------------------------------------------------
 SOURCES_PATH=src
@@ -24,7 +25,8 @@ ALL_HPP_FILES:=$(shell find ${HEADERS_PATH} -name *.hpp)
 
 #----------------------------------------------------------
 stegim:	Makefile ${BIN_PATH} ${ALL_CPP_FILES} ${ALL_HPP_FILES}
-	g++ ${ALL_CPP_FILES} -I${HEADERS_PATH} ${GCC_FLAGS} -o ${BIN_PATH}/${BIN_NAME} ${DEBUG_FLAG}
+	@echo "Building stegim..."
+	@g++ ${ALL_CPP_FILES} -I${HEADERS_PATH} ${GCC_FLAGS} -o ${BIN_PATH}/${BIN_NAME} ${DEBUG_FLAG} ${OPENCV_FLAGS}
 
 #----------------------------------------------------------
 ${BIN_PATH}:

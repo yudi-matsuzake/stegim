@@ -396,7 +396,7 @@ std::ostream& operator<< (std::ostream& stream, const StegimArgs& args){
 	stream << "Least significant bits: " << args.n_least_significant_bit << endl;
 
 	//file
-	stream << "File: " << args.file << endl;
+	if(args.file.size())stream << "File: " << args.file << endl;
 
 	//imagens
 	//primeira
