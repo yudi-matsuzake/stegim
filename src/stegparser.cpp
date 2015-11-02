@@ -268,6 +268,14 @@ void StegParser::default_options_parser(int key, char* arg, struct argp_state* s
 	StegParser* steg_parser = static_cast<StegParser*>(state->input);
 
 	switch(key){
+		//verbosity off
+		case 'q':
+			steg_parser->args->verbose = false;
+			break;
+		//verbosity on
+		case 'v':
+			steg_parser->args->verbose = true;
+			break;
 		//channels
 		case 'C':
 			channel_arg_parser(steg_parser, arg, state);
@@ -284,7 +292,7 @@ void StegParser::default_options_parser(int key, char* arg, struct argp_state* s
 //is_default_opt
 bool is_default_opt(int key){
 	DEBUG("", 3);
-	return key == 'C' || key == 'b';
+	return key == 'C' || key == 'b' || key == 'v' || key == 'q';
 }
 
 //steg parser
