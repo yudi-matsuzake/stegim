@@ -29,6 +29,8 @@ Opções padrões dos comandos, i.e., opções que conterão em todos os comando
 
 `--nleast-siginificant-bit=N` `-b N` Número de bits menos significativos que serão usados para a máscara de esteganografia.
 
+`--file=FILE[.txt]` `-f FILE[.txt]` Arquivo para ser escondido na imagem
+
 ## STEG
 -------
 

@@ -49,6 +49,13 @@
 #define OPT_NLEAST_SB_GROUP	0	//5
 #define NLEAST_SB_OPT(X)	{OPT_NLEAST_SB, OPT_NLEAST_SB_ARG, X, OPT_NLEAST_SB_DOC, OPT_NLEAST_SB_GROUP}	//6
 
+//ASCII FILE
+#define OPT_FILE		"file", 'f' 	//1 e 2
+#define OPT_FILE_ARG		"FILE[.txt]" 	//1 e 2
+#define OPT_FILE_DOC 		"Hide ascii text from FILE in image(steg) or extract the hidden text to file(x) or show informations about the text file and image(info)."
+#define OPT_FILE_GROUP		0
+#define FILE_OPT(X)		{OPT_FILE, OPT_FILE_ARG, X, OPT_FILE_DOC, OPT_FILE_GROUP}
+
 //--STEG---------------------------------------------------
 //FOREACH_IMG_TXT
 #define OPT_FOREACH_IT 		"foreach-img-txt", 'F'
@@ -62,7 +69,7 @@
 
 //DEFAULT OPTIONS (todos os comandos terão)
 #define STEGIM_DEFAULT_OPTION(X)\
-	QUIET_OPT(OPTION_HIDDEN), VERBOSE_OPT(OPTION_HIDDEN), CHANNELS_OPT(X), NLEAST_SB_OPT(X)
+	QUIET_OPT(OPTION_HIDDEN), VERBOSE_OPT(OPTION_HIDDEN), CHANNELS_OPT(X), NLEAST_SB_OPT(X), FILE_OPT(X)
 
 //STEG
 #define STEG_NAME "steg"

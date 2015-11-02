@@ -13,9 +13,11 @@
 const char *argp_program_version = STEGIM_VERSION;
 const char *argp_program_bug_address = STEGIM_PROGRAM_BUG_ADDRESS;
 
+#define STEGIM_ERROR_NO_IMAGE "At least one image argument is required"
+
 //PARSER ERRORS
 #define BGR_STRING_ERROR "invalid BGR_STRING\n"
-#define NLEAST_SIGNIFICANT_BIT_ERROR "invalid argument for the least_significant_bit\n"
+#define NLEAST_SIGNIFICANT_BIT_ERROR "invalid argument for the least_significant_bit: must to be a number [1-7]\n"
 
 //-STEG OPTIONS--------------------------------------------
 static struct argp_option steg_options[] = {STEGIM_STEG_OPTIONS(0), {0,0,0,0,0,0}};
@@ -51,12 +53,6 @@ StegParser::~StegParser(){
 
 StegimArgs* StegParser::get_args(){
 	return args;
-}
-
-void StegimArgs::set_bgr(bool B, bool G, bool R){
-	this->B = B;
-	this->G = G;
-	this->R = R;
 }
 
 //--ARGP_CONSTROY------------------------------------------
@@ -262,6 +258,17 @@ void channel_arg_parser(StegParser* steg_parser, char* arg, struct argp_state* s
 	steg_parser->get_args()->set_bgr(bool_BGR[0], bool_BGR[1], bool_BGR[2]);
 }
 
+void n_bit_parser(StegParser* steg_parser, char* arg, struct argp_state* state){
+	//se -b não recebeu argumento
+	if(!arg) argp_error(state, NLEAST_SIGNIFICANT_BIT_ERROR);
+	int n_bit = atoi(arg);
+
+	if(n_bit < 1 || n_bit  > 7)
+		argp_error(state, NLEAST_SIGNIFICANT_BIT_ERROR);
+
+	steg_parser->get_args()->set_nleast_significant_bit(n_bit);
+}
+
 //default options parser
 void StegParser::default_options_parser(int key, char* arg, struct argp_state* state){
 	DEBUG("", 3);
@@ -272,50 +279,85 @@ void StegParser::default_options_parser(int key, char* arg, struct argp_state* s
 		case 'q':
 			steg_parser->args->verbose = false;
 			break;
+	
 		//verbosity on
 		case 'v':
 			steg_parser->args->verbose = true;
 			break;
+
 		//channels
 		case 'C':
 			channel_arg_parser(steg_parser, arg, state);
-		break;
+			break;
 
 		//least significant bit
 		case 'b':
-			if(!arg) argp_error(state, NLEAST_SIGNIFICANT_BIT_ERROR);
-			steg_parser->args->n_least_significant_bit = atoi(arg);
-		break;
+			n_bit_parser(steg_parser, arg, state);
+
+			break;
+
+		//nenhuma imagem de argumetno
+		case ARGP_KEY_NO_ARGS:
+			cerr << STEGIM_ERROR_NO_IMAGE << endl;
+			argp_usage(state);
+			break;
 	}
 }
 
 //is_default_opt
 bool is_default_opt(int key){
 	DEBUG("", 3);
-	return key == 'C' || key == 'b' || key == 'v' || key == 'q';
+	return 	key == 'C' || key == 'b' || key == 'v' || key == 'q' ||
+		key == ARGP_KEY_NO_ARGS;
 }
 
 //steg parser
 error_t StegParser::steg_parser(int key, char* arg, struct argp_state* state){
 	DEBUG("", 3);
+	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
+	else switch(key){
+		case 'f':
+			if(arg) steg_parser->args->add_file(string(arg));
+			break;
+		case ARGP_KEY_ARG:
+			if(arg)	steg_parser->args->add_img(string(arg));
+			break;
+	}
 	return 0;
 }
 
 //info parser
 error_t StegParser::info_parser(int key, char* arg, struct argp_state* state){
 	DEBUG("", 3);
+	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
+	else switch(key){
+		case ARGP_KEY_ARG:
+			if(arg)	steg_parser->args->add_img(string(arg));
+			break;
+	}
 	return 0;
 }
 
 //x parser
 error_t StegParser::x_parser(int key, char* arg, struct argp_state* state){
 	DEBUG("", 3);
+	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
+	else switch(key){
+		case ARGP_KEY_ARG:
+			if(arg)	steg_parser->args->add_img(string(arg));
+			break;
+	}
+
+
 	return 0;
 }
 
@@ -352,6 +394,20 @@ std::ostream& operator<< (std::ostream& stream, const StegimArgs& args){
 
 	//Bits menos significativos
 	stream << "Least significant bits: " << args.n_least_significant_bit << endl;
+
+	//file
+	stream << "File: " << args.file << endl;
+
+	//imagens
+	//primeira
+	if(args.img.size() > 0){
+		stream << "Image(s): " << args.img[0];
+
+		for(size_t i=1; i<args.img.size(); i++)
+			stream << ", " << args.img[i];
+
+		stream << "." << endl;
+	}
 	
 	return stream;
 }

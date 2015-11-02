@@ -3,6 +3,7 @@
 
 //--INCLUDES-----------------------------------------------
 #include <argp.h>
+#include <vector>
 #include "stegoptions.hpp"
 #include "debug.hpp"
 
@@ -68,8 +69,28 @@ public:
 	bool verbose;			//Guarda se o programa vai executar no modo verboso ou não
 	short n_least_significant_bit; 	//Número de bits menos significativos que serão usados
 
+	vector<string> img;
+	string file;
+	
+
 	//set bgr
-	void set_bgr(bool B, bool G, bool R);
+	void set_bgr(bool B, bool G, bool R){
+		this->B = B;
+		this->G = G;
+		this->R = R;
+	}
+
+	void add_img(string path){
+		img.push_back(path);
+	}
+
+	void add_file(string file){
+		this->file = file;
+	}
+
+	void set_nleast_significant_bit(short n_least_significant_bit){
+		this->n_least_significant_bit = n_least_significant_bit;
+	}
 
 	//operators
 	friend std::ostream& operator<< (std::ostream& stream, const StegimArgs& args);
