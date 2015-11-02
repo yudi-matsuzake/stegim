@@ -18,13 +18,13 @@ const char *argp_program_bug_address = STEGIM_PROGRAM_BUG_ADDRESS;
 #define NLEAST_SIGNIFICANT_BIT_ERROR "invalid argument for the least_significant_bit\n"
 
 //-STEG OPTIONS--------------------------------------------
-static struct argp_option steg_options[] = {STEGIM_STEG_OPTIONS, {0,0,0,0,0,0}};
+static struct argp_option steg_options[] = {STEGIM_STEG_OPTIONS(0), {0,0,0,0,0,0}};
 
 //-INFO OPTIONS--------------------------------------------
-static struct argp_option info_options[] = {STEGIM_INFO_OPTIONS, {0,0,0,0,0,0}};
+static struct argp_option info_options[] = {STEGIM_INFO_OPTIONS(0), {0,0,0,0,0,0}};
 
 //-X OPTIONS-----------------------------------------------
-static struct argp_option x_options[] = {STEGIM_X_OPTIONS, {0,0,0,0,0,0}};
+static struct argp_option x_options[] = {STEGIM_X_OPTIONS(0), {0,0,0,0,0,0}};
 
 //-STEGIM OPTIONS------------------------------------------
 static struct argp_option stegim_options[] = {STEGIM_OPTIONS, {0,0,0,0,0,0}};
