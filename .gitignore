@@ -39,5 +39,6 @@ test/
 #binary
 bin/
 
-#imagens
+#testes
 imagens/
+textos/

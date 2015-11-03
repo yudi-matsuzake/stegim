@@ -20,7 +20,6 @@ int main(int argc, char* argv[]){
 	//stegim
 	if(args != NULL){
 		Stegim stegim(args);
-
 		stegim.run();
 	}
 

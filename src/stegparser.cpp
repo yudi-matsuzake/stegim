@@ -337,6 +337,9 @@ error_t StegParser::info_parser(int key, char* arg, struct argp_state* state){
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
 	else switch(key){
+		case 'f':
+			if(arg) steg_parser->args->add_file(string(arg));
+			break;
 		case ARGP_KEY_ARG:
 			if(arg)	steg_parser->args->add_img(string(arg));
 			break;
@@ -352,6 +355,9 @@ error_t StegParser::x_parser(int key, char* arg, struct argp_state* state){
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
 	else switch(key){
+		case 'f':
+			if(arg) steg_parser->args->add_file(string(arg));
+			break;
 		case ARGP_KEY_ARG:
 			if(arg)	steg_parser->args->add_img(string(arg));
 			break;
