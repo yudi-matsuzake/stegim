@@ -38,6 +38,17 @@ Opções do comando STEG
 
 `--foreach-img-txt [img.jpg text.txt]+` `-F [img.jpg text.txt]+` Para cada imagem, use esse arquivo de entrada/saída;
 
+`--output-img=img` `-O img` Escreve a imagem com conteúdo escondido em `img`.
+
+`--append-to-output=string` `-A string` Coloca `string`no final das imagens da saída.
+
+*Exemplo*
+
+* string=.steganografada;
+* imagens de entrada = img.jpg, img0.jpg, img1.jpg;
+* imagens de saída serão = img.steganografada.jpg, img0.steganografada.jpg, img.steganografada1.jpg
+
+
 ## INFO
 -------
 
