@@ -51,19 +51,30 @@
 
 //ASCII FILE
 #define OPT_FILE		"file", 'f' 	//1 e 2
-#define OPT_FILE_ARG		"FILE[.txt]" 	//1 e 2
-#define OPT_FILE_DOC 		"Hide ascii text from FILE in image(steg) or extract the hidden text to file(x) or show informations about the text file and image(info)."
-#define OPT_FILE_GROUP		0
+#define OPT_FILE_ARG		"FILE[.txt]" 	//3
+#define OPT_FILE_DOC 		"Hide ascii text from FILE in image(steg) or extract the hidden text to file(x) or show informations about the text file and image(info)."  	//4
+#define OPT_FILE_GROUP		0	//5
 #define FILE_OPT(X)		{OPT_FILE, OPT_FILE_ARG, X, OPT_FILE_DOC, OPT_FILE_GROUP}
 
 //--STEG---------------------------------------------------
-//FOREACH_IMG_TXT
-#define OPT_FOREACH_IT 		"foreach-img-txt", 'F'
-#define OPT_FOREACH_IT_ARG	"[img.jpg text.txt]+"
-#define OPT_FOREACH_IT_DOC	"For every image, a file must to be given for input."
-#define OPT_FOREACH_IT_GROUP	0
-#define FOREACH_IT_OPT(X)	{OPT_FOREACH_IT, OPT_FOREACH_IT_ARG, X, OPT_FOREACH_IT_DOC, OPT_FOREACH_IT_GROUP}
-
+	//output img
+#define OPT_OUTFILE		"output-img", 'O' //1 e 2
+#define OPT_OUTFILE_ARG		"img.<jpg|png|...>" //3
+#define OPT_OUTFILE_DOC		"Write the image with hidden content in img.<jpg|png|...>. "\
+				"Warning: in case of multiple images, the -A options is recommended."
+#define OPT_OUTFILE_GROUP		0	//5
+#define FILE_OUTFILE_OPT(X)	{OPT_OUTFILE, OPT_OUTFILE_ARG, X, OPT_OUTFILE_DOC, OPT_OUTFILE_GROUP}
+	
+	//append-to-output
+#define OPT_APPEND_OUTPUT	"append-to-output", 'A' //1 e 2
+#define OPT_APPEND_OUTPUT_ARG	"string"		//3
+#define OPT_APPEND_OUTPUT_DOC	"Append `string` to the image output. "\
+				"Ex: string = \"_to_append\"; "\
+				"Image name = \"img.jpg\"; "\
+				"The output will be = img_to_append.jpg. "\
+				"Default string is \"_steg\""
+#define OPT_APPEND_OUTPUT_GROUP 0
+#define APPEND_OUTPUT_OPT(X) 	{OPT_APPEND_OUTPUT, OPT_APPEND_OUTPUT_ARG, X, OPT_APPEND_OUTPUT_DOC, OPT_APPEND_OUTPUT_GROUP}
 
 //OPTIONS GROUPS-------------------------------------------
 
@@ -73,8 +84,8 @@
 
 //STEG
 #define STEG_NAME "steg"
-#define STEGIM_STEG_OPTIONS(X) {0,0,0,0,"Command "STEG_NAME,0}, STEGIM_DEFAULT_OPTION(X), FOREACH_IT_OPT(X)
-
+#define STEGIM_STEG_OPTIONS(X) {0,0,0,0,"Command "STEG_NAME,0}, STEGIM_DEFAULT_OPTION(X),\
+								FILE_OUTFILE_OPT(X), APPEND_OUTPUT_OPT(X)
 //INFO
 #define INFO_NAME "info"
 #define STEGIM_INFO_OPTIONS(X) {0,0,0,0,"Command "INFO_NAME,0}, STEGIM_DEFAULT_OPTION(X)

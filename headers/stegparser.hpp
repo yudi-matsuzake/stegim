@@ -103,6 +103,9 @@ public:
 	StegArgs(const StegimArgs& s):StegimArgs(s){ this->command = STEG; }
 	~StegArgs(){}
 
+	string output_img;
+	string append_to_output;
+
 	//operators
 	friend std::ostream& operator<< (std::ostream& stream, const StegArgs& args);
 };

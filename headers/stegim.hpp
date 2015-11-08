@@ -2,21 +2,31 @@
 #define _STEGIM_HPP_
 
 #include <iostream>
+#include <cstdio>
 #include <fstream>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "stegparser.hpp"
 
+#define APPEND_TO_OUTPUT 	"_steg"
+#define BUFFER_SIZE		8192
+#define N_BIT_FOR_NCHARACTER	32
+
 using namespace std;
 using namespace cv;
+
+//erros de steg
+typedef enum { SERROR_NO_ERROR, SERROR_IMG_OVERFLOW } STEG_ERROR;
 
 class Stegim{
 public:
 	class Steg;
 private:
+	StegimArgs* args;
 	bool B, G, R;
 	short n_least_significant_bit;
+	bool verbose;
 	unsigned int n_channels;
 
 	unsigned char mask;
@@ -26,8 +36,14 @@ private:
 
 	void (Stegim::*command_function)(Steg&) = NULL;
 
+	//Funções do steg
+	STEG_ERROR steg_in_image(Stegim::Steg& s, Mat& output, FILE* input);
 	void steg(Steg& s);
+
+	//Funções do Info
 	void info(Steg& s);
+
+	//Funções do X
 	void x(Steg& s);
 
 public:
@@ -73,8 +89,10 @@ public:
 	int default_steg_inicialize(Steg& s, string mode);
 
 	//---------------------------------------------------------
-	Stegim(StegimArgs* args): 	B(args->B), G(args->G), R(args->R),
-					n_least_significant_bit(args->n_least_significant_bit)
+	Stegim(StegimArgs* args): 	args(args),
+					B(args->B), G(args->G), R(args->R),
+					n_least_significant_bit(args->n_least_significant_bit),
+					verbose(args->verbose)
 	{
 		DEBUG("", 1);
 		DEBUG("cria a máscara", 2);
@@ -143,9 +161,110 @@ int Stegim::default_steg_inicialize(Steg& s, string mode){
 }
 
 //--STEG----------------------------------------------------------
+// retorna o nome da imagem de saída
+	// dado o nome da imagem "imagem.jpg" vai retornar "imagem-steg.jpg"
+string img_out_name ( string img_name, string append_to_output = APPEND_TO_OUTPUT ){
+	//posição do último ponto antes do fim da string
+	size_t dot_position = img_name.rfind('.');
+	
+	// pega o formato ( ex: .jpg )
+	string format = img_name.substr(dot_position, img_name.size() - dot_position);
+	// pega o nome da string (ex: imagem
+	string file_name = img_name.substr(0, dot_position);
+
+	// retorna imagem_steg.jpg
+	return (file_name + append_to_output + format);
+}
+
+//this is why we are here
+STEG_ERROR Stegim::steg_in_image(Steg& s, Mat& output, FILE* input){
+	DEBUG("", 3);
+
+	char buffer[BUFFER_SIZE];		//buffer utilizado para ler o input
+	unsigned long long n_bytes_writed = 0;	//número de bytes lidos para verificar overflow
+
+	short nbit = this->n_least_significant_bit;
+
+	//esconde o texto
+	//indice da imagem que estamos escondendo
+	unsigned int bimdex = N_BIT_FOR_NCHARACTER%nbit; 		//index do bit da imagem
+
+	//index do pixel da imagem
+		//essa coisa estranha [ +(bimtex != 0) ]
+		// é como se fosse um arredondamento pro teto
+	size_t imdex = (N_BIT_FOR_NCHARACTER/nbit) + (bimdex != 0);
+
+	while(size_t n_data = fread(buffer, sizeof(char), BUFFER_SIZE, input)){
+		//Deu overflow?
+		n_bytes_writed += n_data;
+		if(n_bytes_writed > s.n_character)
+			return SERROR_IMG_OVERFLOW;
+
+		//Para todo byte lido...
+		for(size_t i = 0; i<n_data; i++){
+			short bit = 8;
+			//para todo bit de texto
+			while(bit--){
+
+			}
+		}
+	}
+
+	//esconde o número de bytes
+	
+	return SERROR_NO_ERROR;
+}
+
 void Stegim::steg(Steg& s){
+	DEBUG("", 2);
 	if(!default_steg_inicialize(s, "r")) return;
-	cout << "steg (" << s.image_name << ")" << endl;
+	StegArgs* args = static_cast<StegArgs*>(this->args);
+
+	//Image de saída
+	string imgout;
+	if(args->output_img.size()){
+		imgout = args->output_img;
+	}else{
+		if(args->append_to_output.size())
+			imgout = img_out_name(s.image_name, args->append_to_output);
+		else
+			imgout = img_out_name(s.image_name);
+	}
+
+	//Entrada de texto
+	FILE* text_input = (s.file)?s.file:stdin;
+	if(!s.file) s.file_name = "Standard Input";
+
+	if( this->verbose )
+		cout << "steg (" << s.image_name <<
+			   	" + " << s.file_name <<
+				" = "  << imgout <<
+				")" << endl;
+	
+	if(text_input != stdin){
+		if(s.n_character < s.file_length()){
+			cerr << "The image " << s.image_name
+				<< " has no room for " << s.file_name
+				<< endl;
+			return;
+		}
+	}
+
+//	Mat output_img(s.img.size(), s.img.type());
+//
+//	STEG_ERROR error;
+//	if(!(error = steg_in_image(s, output_img, text_input))){
+//		if(this->args->verbose)
+//			cout << imgout << " completed." << endl;
+//
+//	}else{
+//		cerr << "Error occurred while processing " << imgout << ":\v";
+//		
+//		if(error == SERROR_IMG_OVERFLOW){
+//			cerr << imgout << " has no room for the input." << endl;
+//		}
+//	}
+
 }
 
 //--INFO----------------------------------------------------------
@@ -156,19 +275,21 @@ void print_mask(unsigned char mask){
 }
 
 void Stegim::info(Steg& s){
+	DEBUG("", 2);
 	if(!default_steg_inicialize(s, "r")) return;
 
-	cout << "> info (" << s.image_name << ")" << endl;
+	cout << "> info (" << s.image_name << ")----------" << endl;
 	cout << '\t' << "Resolution: " << s.img.size() << endl;
 	cout << '\t' << "N bytes (character): " << s.n_character << endl;
 	cout << '\t' << "N channels: "		<< this->n_channels << endl;
 	cout << '\t' << "Channel mask: ";
 	print_mask(this->mask);
+	cout << '\t' << "Channel ~mask: ";
+	print_mask(~this->mask);
 
 	DEBUG("Se couber o arquivo na imagem, avisa", 3);
 	if(s.file != NULL){
 		unsigned int file_size = s.file_length();
-		cout << "----------" << endl;
 		//tamanho do arquivo de texto:
 		cout << '\t' << "size of \""<< s.file_name <<"\"(in bytes/character): "
 			<< file_size << endl;
@@ -176,10 +297,10 @@ void Stegim::info(Steg& s){
 		//o texto cabe na imagem?
 		string has = "";
 		if(file_size > s.n_character){
-			has = "not ";
+			has = "no ";
 		}
 		cout << '\t' << "\"" << s.image_name <<
-			"\" has " << has << "space for the content of \"" <<
+			"\" has " << has << "room for the content of \"" <<
 			s.file_name << "\"! ";
 
 		cout << "(" << file_size << "/" << s.n_character << ")" << endl;
@@ -189,6 +310,7 @@ void Stegim::info(Steg& s){
 
 //--X-------------------------------------------------------------
 void Stegim::x(Steg& s){
+	DEBUG("", 2);
 	if(!default_steg_inicialize(s, "w")) return;
 	cout << "x (" << s.image_name << ")" << endl;
 }

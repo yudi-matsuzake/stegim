@@ -315,12 +315,19 @@ bool is_default_opt(int key){
 error_t StegParser::steg_parser(int key, char* arg, struct argp_state* state){
 	DEBUG("", 3);
 	StegParser* steg_parser = static_cast<StegParser*>(state->input);
+	StegArgs* steg_args = static_cast<StegArgs*>(steg_parser->args);
 
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
 	else switch(key){
 		case 'f':
 			if(arg) steg_parser->args->add_file(string(arg));
+			break;
+		case 'O':
+			if(arg) steg_args->output_img = arg;
+			break;
+		case 'A':
+			if(arg) steg_args->append_to_output = arg;
 			break;
 		case ARGP_KEY_ARG:
 			if(arg)	steg_parser->args->add_img(string(arg));
@@ -421,6 +428,9 @@ std::ostream& operator<< (std::ostream& stream, const StegimArgs& args){
 std::ostream& operator<< (std::ostream& stream, const StegArgs& args){
 	DEBUG("", 3);
 	stream << static_cast<const StegimArgs&>(args);
+
+	if(args.output_img.size())
+		stream << "output img: " << args.output_img << endl;
 
 	return stream;
 }

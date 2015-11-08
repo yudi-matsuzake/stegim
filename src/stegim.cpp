@@ -13,8 +13,11 @@ int main(int argc, char* argv[]){
 	StegimArgs* args = parser.get_args();
 	
 	//se for no modo verboso, mostra agumentos
-	if(args != NULL){ 
-		if(args->verbose) cout << *args;
+	if(args != NULL && args->verbose){
+		if(args->command == NONE) cout << *args ;
+		else if(args->command == STEG) cout << *static_cast<StegArgs*>(args);
+		else if(args->command == INFO) cout << *static_cast<InfoArgs*>(args);
+		else if(args->command == X) cout << *static_cast<XArgs*>(args);
 	}
 
 	//stegim
