@@ -19,6 +19,9 @@ using namespace cv;
 //erros de steg
 typedef enum { SERROR_NO_ERROR, SERROR_IMG_OVERFLOW } STEG_ERROR;
 
+//Canais
+typedef enum { B, G, R } BGR ;
+
 class Stegim{
 public:
 	class Steg;
@@ -183,16 +186,18 @@ STEG_ERROR Stegim::steg_in_image(Steg& s, Mat& output, FILE* input){
 	char buffer[BUFFER_SIZE];		//buffer utilizado para ler o input
 	unsigned long long n_bytes_writed = 0;	//número de bytes lidos para verificar overflow
 
-	short nbit = this->n_least_significant_bit;
+	//index dos canais
+	size_t chcount[] = {0, 0, 0};
+	{
+		size_t i = 0;
+		if(this->B) 	chcount[B] = i++;
+		if(this->G) 	chcount[G] = i++;
+		if(this->R) 	chcount[R] = i++;
+	}
 
-	//esconde o texto
-	//indice da imagem que estamos escondendo
-	unsigned int bimdex = N_BIT_FOR_NCHARACTER%nbit; 		//index do bit da imagem
-
-	//index do pixel da imagem
-		//essa coisa estranha [ +(bimtex != 0) ]
-		// é como se fosse um arredondamento pro teto
-	size_t imdex = (N_BIT_FOR_NCHARACTER/nbit) + (bimdex != 0);
+	size_t ibit 	= N_BIT_FOR_NCHARACTER;			//guarda o valor o iézimo bit que escondemos
+	size_t nbit 	= this->n_least_significant_bit;	//número de bits menos significativos
+	size_t nch 	= this->n_channels;			//número de canais
 
 	while(size_t n_data = fread(buffer, sizeof(char), BUFFER_SIZE, input)){
 		//Deu overflow?
@@ -203,9 +208,40 @@ STEG_ERROR Stegim::steg_in_image(Steg& s, Mat& output, FILE* input){
 		//Para todo byte lido...
 		for(size_t i = 0; i<n_data; i++){
 			short bit = 8;
-			//para todo bit de texto
+			//para todo bit do byte lido...
 			while(bit--){
+				unsigned char b = (buffer[i]>>bit)&1;
 
+				//Calcula valores de acordo com o ibit
+				size_t lin 	= ibit/(nbit*nch*s.img.cols);
+				size_t col 	= (ibit/(nch*nbit))%s.img.cols;
+				size_t ch  	= (ibit/nbit)%nch;
+				size_t bit_pos 	= ibit%nbit;
+
+				//pega ponteiro apontado para a linha `lin`
+				//da imagem de entrada
+				uchar* img_ptr = s.img.ptr<uchar>(lin);
+				//da imagem de saída
+				uchar* out_ptr = output.ptr<uchar>(lin);
+
+				//pega ponteiro apontado para (lin, col)
+				//da imgem de entrada
+				uchar* img_pixel = img_ptr + (col * nch);
+				//da imagem de saída
+				uchar* out_pixel = out_ptr + (col * nch);
+
+				if(this->B && ch == chcount[B]){
+					out_pixel[B] = img_pixel[B] | (b << (nbit - bit_pos));
+
+				}else if(this->G && ch == chcount[G]){
+					out_pixel[G] = img_pixel[G] | (b << (nbit - bit_pos));
+
+				}else if(this->R && ch == chcount[R]){
+					out_pixel[R] = img_pixel[R] | (b << (nbit - bit_pos));
+
+				}
+
+				ibit++;
 			}
 		}
 	}
@@ -250,20 +286,28 @@ void Stegim::steg(Steg& s){
 		}
 	}
 
-//	Mat output_img(s.img.size(), s.img.type());
-//
-//	STEG_ERROR error;
-//	if(!(error = steg_in_image(s, output_img, text_input))){
-//		if(this->args->verbose)
-//			cout << imgout << " completed." << endl;
-//
-//	}else{
-//		cerr << "Error occurred while processing " << imgout << ":\v";
-//		
-//		if(error == SERROR_IMG_OVERFLOW){
-//			cerr << imgout << " has no room for the input." << endl;
-//		}
-//	}
+	Mat output_img = s.img.clone();
+
+	STEG_ERROR error;
+	if(!(error = steg_in_image(s, output_img, text_input))){
+
+		if(output_img.data){
+			imwrite( imgout, output_img );
+		}
+		else
+			cerr << "An error occurred while processing "
+				<< s.image_name  << "." << endl;
+
+		if(this->args->verbose)
+			cout << imgout << " completed." << endl;
+
+	}else{
+		cerr << "Error occurred while processing " << imgout << ":\v";
+		
+		if(error == SERROR_IMG_OVERFLOW){
+			cerr << imgout << " has no room for the input." << endl;
+		}
+	}
 
 }
 
