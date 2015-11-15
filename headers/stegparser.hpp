@@ -36,7 +36,7 @@
 
 #define STEGIM_X_USAGE\
 	"[OPTIONS] <img.jpg> [img1.jpg ... ]\n"\
-	"-O saida.txt <img.jpg>\n"\
+	"-f saida.txt <img.jpg>\n"\
 	"-C CHANNEL_STRING <img.jpg> [img0.jpg ...]"
 
 #define STEGIM_USAGE\

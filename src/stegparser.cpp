@@ -17,7 +17,7 @@ const char *argp_program_bug_address = STEGIM_PROGRAM_BUG_ADDRESS;
 
 //PARSER ERRORS
 #define BGR_STRING_ERROR "invalid BGR_STRING\n"
-#define NLEAST_SIGNIFICANT_BIT_ERROR "invalid argument for the least_significant_bit: must to be a number [1-7]\n"
+#define NLEAST_SIGNIFICANT_BIT_ERROR "invalid argument for the least_significant_bit: must to be a number [1-8]\n"
 
 //-STEG OPTIONS--------------------------------------------
 static struct argp_option steg_options[] = {STEGIM_STEG_OPTIONS(0), {0,0,0,0,0,0}};
@@ -263,7 +263,7 @@ void n_bit_parser(StegParser* steg_parser, char* arg, struct argp_state* state){
 	if(!arg) argp_error(state, NLEAST_SIGNIFICANT_BIT_ERROR);
 	int n_bit = atoi(arg);
 
-	if(n_bit < 1 || n_bit  > 7)
+	if(n_bit < 1 || n_bit  > 8)
 		argp_error(state, NLEAST_SIGNIFICANT_BIT_ERROR);
 
 	steg_parser->get_args()->set_nleast_significant_bit(n_bit);
@@ -293,7 +293,11 @@ void StegParser::default_options_parser(int key, char* arg, struct argp_state* s
 		//least significant bit
 		case 'b':
 			n_bit_parser(steg_parser, arg, state);
-
+			break;
+		
+		//arquivo
+		case 'f':
+			if(arg) steg_parser->args->add_file(string(arg));
 			break;
 
 		//nenhuma imagem de argumetno
@@ -308,7 +312,7 @@ void StegParser::default_options_parser(int key, char* arg, struct argp_state* s
 bool is_default_opt(int key){
 	DEBUG("", 3);
 	return 	key == 'C' || key == 'b' || key == 'v' || key == 'q' ||
-		key == ARGP_KEY_NO_ARGS;
+		key == 'f' || key == ARGP_KEY_NO_ARGS;
 }
 
 //steg parser
@@ -320,9 +324,6 @@ error_t StegParser::steg_parser(int key, char* arg, struct argp_state* state){
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
 	else switch(key){
-		case 'f':
-			if(arg) steg_parser->args->add_file(string(arg));
-			break;
 		case 'O':
 			if(arg) steg_args->output_img = arg;
 			break;
@@ -344,9 +345,6 @@ error_t StegParser::info_parser(int key, char* arg, struct argp_state* state){
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
 	else switch(key){
-		case 'f':
-			if(arg) steg_parser->args->add_file(string(arg));
-			break;
 		case ARGP_KEY_ARG:
 			if(arg)	steg_parser->args->add_img(string(arg));
 			break;
@@ -362,9 +360,6 @@ error_t StegParser::x_parser(int key, char* arg, struct argp_state* state){
 	if(is_default_opt(key))
 		default_options_parser(key, arg, state);
 	else switch(key){
-		case 'f':
-			if(arg) steg_parser->args->add_file(string(arg));
-			break;
 		case ARGP_KEY_ARG:
 			if(arg)	steg_parser->args->add_img(string(arg));
 			break;

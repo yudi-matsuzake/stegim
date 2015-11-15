@@ -52,7 +52,7 @@
 //ASCII FILE
 #define OPT_FILE		"file", 'f' 	//1 e 2
 #define OPT_FILE_ARG		"FILE[.txt]" 	//3
-#define OPT_FILE_DOC 		"Hide ascii text from FILE in image(steg) or extract the hidden text to file(x) or show informations about the text file and image(info)."  	//4
+#define OPT_FILE_DOC 		"Hide ascii text from FILE in image (steg) or extract the hidden text to FILE (x) or show informations about the FILE and image(info)."  	//4
 #define OPT_FILE_GROUP		0	//5
 #define FILE_OPT(X)		{OPT_FILE, OPT_FILE_ARG, X, OPT_FILE_DOC, OPT_FILE_GROUP}
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdio>
 #include <fstream>
+#include <limits.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -18,9 +19,10 @@ using namespace cv;
 
 //erros de steg
 typedef enum { SERROR_NO_ERROR, SERROR_IMG_OVERFLOW } STEG_ERROR;
+typedef enum { XERROR_NO_ERROR, XERROR_TOO_MANY_BYTES } X_ERROR;
 
 //Canais
-typedef enum { B, G, R } BGR ;
+typedef enum { _B, _G, _R } BGR ;
 
 class Stegim{
 public:
@@ -37,7 +39,7 @@ private:
 
 	vector<Steg> stegs;
 
-	void (Stegim::*command_function)(Steg&) = NULL;
+	void (Stegim::*command_function)(Steg&);
 
 	//Funções do steg
 	STEG_ERROR steg_in_image(Stegim::Steg& s, Mat& output, FILE* input);
@@ -47,6 +49,7 @@ private:
 	void info(Steg& s);
 
 	//Funções do X
+	X_ERROR extract_text_from_image(Steg& s);
 	void x(Steg& s);
 
 public:
@@ -140,6 +143,24 @@ public:
 };
 
 //----------------------------------------------------------------
+/**********************************************************
+ * default_steg_inicialize - inicializa de maneira genérica
+ * os campos das funções steg, info e x
+ * -------------------------------------------------------
+ *
+ *  *) Primeiro inicializa a Imagem lendo do arquivo
+ *  s.image_name, se não conseguir, retorna um erro e sai;
+ *
+ *  *) Calcula o número de caracteres que cabem na imagem
+ *
+ *  *) Abre o arquivo da opção -f --file, se houver;
+ *
+ *  @return 	um código de erro;
+ *
+ *  @s		classe que conterá os objetos inicializados;
+ *
+ *  @mode	é o modo que vai abrir o arquivo;
+ **********************************************************/
 int Stegim::default_steg_inicialize(Steg& s, string mode){
 	s.img = imread(s.image_name, CV_LOAD_IMAGE_COLOR);
 	if(!s.img.data){
@@ -164,14 +185,28 @@ int Stegim::default_steg_inicialize(Steg& s, string mode){
 }
 
 //--STEG----------------------------------------------------------
-// retorna o nome da imagem de saída
-	// dado o nome da imagem "imagem.jpg" vai retornar "imagem-steg.jpg"
+/**********************************************************
+ * img_out_name - nome da imagem "imagem.jpg" vai retornar
+ * "imagem-steg.jpg"
+ * --------------------------------------------------------
+ * 
+ * @return:	O nome da imagem de saída. 
+ *
+ * @img_name:	nome da imagem
+ *
+ * @append_to_output: Qual sera a string que sera adicionada 
+ *
+ * ********************************************************/
 string img_out_name ( string img_name, string append_to_output = APPEND_TO_OUTPUT ){
+	//Se você passou uma string vazia, você é trouxão
+	if(!append_to_output.size())
+		append_to_output = APPEND_TO_OUTPUT;
+
 	//posição do último ponto antes do fim da string
 	size_t dot_position = img_name.rfind('.');
 	
 	// pega o formato ( ex: .jpg )
-	string format = img_name.substr(dot_position, img_name.size() - dot_position);
+	string format = ".png";//img_name.substr(dot_position, img_name.size() - dot_position);
 	// pega o nome da string (ex: imagem
 	string file_name = img_name.substr(0, dot_position);
 
@@ -179,20 +214,71 @@ string img_out_name ( string img_name, string append_to_output = APPEND_TO_OUTPU
 	return (file_name + append_to_output + format);
 }
 
-//this is why we are here
+
+/**********************************************************
+ * put_bit - coloca bit em uma posição da imagem;
+ * --------------------------------------------------------
+ *
+ * @return:	void, vazio, nada;
+ *
+ * @img:	Imagem;
+ *
+ * @b:		O bit a ser colocado, 1 ou 0;
+ *
+ * @lin:	A linha da imagem
+ *
+ * @col:	A coluna para o bit ser colocado;
+ *
+ * @ch:		O canal;
+ *
+ * @pos:	A posição: 8 coloca na primeira posição,
+ * 		0 na ultima
+ *
+ * ********************************************************/
+void put_bit(Mat& img, unsigned char b, size_t lin, size_t col, BGR channel, size_t pos){
+	//pega ponteiro apontado para a linha `lin`
+	//da imagem de entrada
+	uchar* img_ptr= img.ptr<uchar>(lin);
+
+	//pega ponteiro apontado para (lin, col)
+	//da imgem de entrada
+	uchar* img_pixel = img_ptr + (col * img.channels());
+	
+	//insere o bit
+	//se o bit for 1
+	if(b)
+		img_pixel[channel] |=  (1 << pos);
+	//se o bit for 0
+	else
+		img_pixel[channel] &= ~(1 << pos);
+
+}
+
+/**********************************************************
+ * steg_in_image - É POR ISSO QUE ESTAMOS AQUI!!! Função que
+ * esconde o texto na imagem.
+ * ---------------------------------------------------------
+ *
+ * @return:	código de erro
+ *
+ * @s:		informações sobre as entradas
+ *
+ * @input:	arquivo que será escondido
+ *
+ * ********************************************************/
 STEG_ERROR Stegim::steg_in_image(Steg& s, Mat& output, FILE* input){
 	DEBUG("", 3);
 
 	char buffer[BUFFER_SIZE];		//buffer utilizado para ler o input
-	unsigned long long n_bytes_writed = 0;	//número de bytes lidos para verificar overflow
+	unsigned int n_bytes_writed = 0;	//número de bytes lidos para verificar overflow
 
 	//index dos canais
 	size_t chcount[] = {0, 0, 0};
 	{
 		size_t i = 0;
-		if(this->B) 	chcount[B] = i++;
-		if(this->G) 	chcount[G] = i++;
-		if(this->R) 	chcount[R] = i++;
+		if(this->B) 	chcount[_B] = i++;
+		if(this->G) 	chcount[_G] = i++;
+		if(this->R) 	chcount[_R] = i++;
 	}
 
 	size_t ibit 	= N_BIT_FOR_NCHARACTER;			//guarda o valor o iézimo bit que escondemos
@@ -207,7 +293,7 @@ STEG_ERROR Stegim::steg_in_image(Steg& s, Mat& output, FILE* input){
 
 		//Para todo byte lido...
 		for(size_t i = 0; i<n_data; i++){
-			short bit = 8;
+			short bit = CHAR_BIT;
 			//para todo bit do byte lido...
 			while(bit--){
 				unsigned char b = (buffer[i]>>bit)&1;
@@ -215,42 +301,58 @@ STEG_ERROR Stegim::steg_in_image(Steg& s, Mat& output, FILE* input){
 				//Calcula valores de acordo com o ibit
 				size_t lin 	= ibit/(nbit*nch*s.img.cols);
 				size_t col 	= (ibit/(nch*nbit))%s.img.cols;
-				size_t ch  	= (ibit/nbit)%nch;
+				size_t ch  	= ibit%nch;
 				size_t bit_pos 	= ibit%nbit;
+				BGR channel;
 
-				//pega ponteiro apontado para a linha `lin`
-				//da imagem de entrada
-				uchar* img_ptr = s.img.ptr<uchar>(lin);
-				//da imagem de saída
-				uchar* out_ptr = output.ptr<uchar>(lin);
+				if(this->B && (ch == chcount[_B]))
+					channel = _B;
 
-				//pega ponteiro apontado para (lin, col)
-				//da imgem de entrada
-				uchar* img_pixel = img_ptr + (col * nch);
-				//da imagem de saída
-				uchar* out_pixel = out_ptr + (col * nch);
+				else if(this->G && (ch == chcount[_G]))
+					channel = _G;
 
-				if(this->B && ch == chcount[B]){
-					out_pixel[B] = img_pixel[B] | (b << (nbit - bit_pos));
+				else channel = _R;
+			
 
-				}else if(this->G && ch == chcount[G]){
-					out_pixel[G] = img_pixel[G] | (b << (nbit - bit_pos));
-
-				}else if(this->R && ch == chcount[R]){
-					out_pixel[R] = img_pixel[R] | (b << (nbit - bit_pos));
-
-				}
+				put_bit(output, b, lin, col, channel, nbit - (bit_pos+1));
 
 				ibit++;
 			}
 		}
 	}
 
-	//esconde o número de bytes
+	//esconde o número de bytes nos primeiros 4 bytes
+	
+	for(ibit=0; ibit<N_BIT_FOR_NCHARACTER; ibit++){
+		unsigned char b = (n_bytes_writed>>(N_BIT_FOR_NCHARACTER-ibit))&1;
+
+		//Calcula valores de acordo com o ibit
+		size_t lin 	= ibit/(nbit*nch*s.img.cols);
+		size_t col 	= (ibit/(nch*nbit))%s.img.cols;
+		size_t ch  	= ibit%nch;
+		size_t bit_pos 	= ibit%nbit;
+		BGR channel;
+
+		if(this->B && (ch == chcount[_B]))
+			channel = _B;
+
+		else if(this->G && (ch == chcount[_G]))
+			channel = _G;
+
+		else channel = _R;
+		
+		//pub bit
+		put_bit(output, b, lin, col, channel, nbit - (bit_pos+1));
+
+	}
 	
 	return SERROR_NO_ERROR;
 }
 
+/**********************************************************
+ * steg - esconde o texto na imagem
+ * --------------------------------------------------------
+ * ********************************************************/
 void Stegim::steg(Steg& s){
 	DEBUG("", 2);
 	if(!default_steg_inicialize(s, "r")) return;
@@ -289,9 +391,14 @@ void Stegim::steg(Steg& s){
 	Mat output_img = s.img.clone();
 
 	STEG_ERROR error;
+
+	//STEGANOGRAPHY 
 	if(!(error = steg_in_image(s, output_img, text_input))){
 
 		if(output_img.data){
+			vector<int> param;
+			param.push_back(CV_IMWRITE_PNG_COMPRESSION);
+			param.push_back(0);
 			imwrite( imgout, output_img );
 		}
 		else
@@ -312,12 +419,26 @@ void Stegim::steg(Steg& s){
 }
 
 //--INFO----------------------------------------------------------
+/**********************************************************
+ * print_mask - Imprime a máscara.
+ * --------------------------------------------------------
+ *
+ * @return: 	nada, void, vazio;
+ *
+ * @mask:	Bits a serem imprimidos;
+ *
+ * ********************************************************/
 void print_mask(unsigned char mask){
 	int shift = 8;
 	while(shift--) cout << ((mask>>shift)&1);
 	cout << endl;
 }
 
+/**********************************************************
+ * info - imprime informações interessantes sobre a imagem
+ * e texto.
+ * --------------------------------------------------------
+ * ********************************************************/
 void Stegim::info(Steg& s){
 	DEBUG("", 2);
 	if(!default_steg_inicialize(s, "r")) return;
@@ -349,14 +470,127 @@ void Stegim::info(Steg& s){
 
 		cout << "(" << file_size << "/" << s.n_character << ")" << endl;
 	}
-
 }
 
 //--X-------------------------------------------------------------
+/**********************************************************
+ * read_bit - Lê um bit em um lugar específico da imagem
+ * --------------------------------------------------------
+ *
+ * @return:	O bit, i.e., 1 ou 0;
+ *
+ * @img:	Imagem;
+ *
+ * @lin:	A linha da imagem
+ *
+ * @col:	A coluna para o bit ser colocado;
+ *
+ * @ch:		O canal;
+ *
+ * @pos:	A posição: 8 coloca na primeira posição,
+ * 		0 na ultima.
+ *
+ * ********************************************************/
+int read_bit(Mat& img, size_t lin, size_t col, BGR channel, size_t pos){
+	//pega ponteiro apontado para a linha `lin`
+	//da imagem de entrada
+	uchar* img_ptr= img.ptr<uchar>(lin);
+
+	//pega ponteiro apontado para (lin, col)
+	//da imgem de entrada
+	uchar* img_pixel = img_ptr + (col * img.channels());
+	
+	return (img_pixel[channel]>>pos)&1;
+
+}
+
+/**********************************************************
+ * extract_text_from_image - Extrai o texto escondido na
+ * imagem s.img e coloca no stream s.file.
+ * --------------------------------------------------------
+ *
+ * @s:		Estrutura de dados com o arquivo de saída e
+ * 		com a imagem.
+ *
+ * ********************************************************/
+X_ERROR Stegim::extract_text_from_image(Steg& s){
+	//index dos canais
+	size_t chcount[] = {0, 0, 0};
+	{
+		size_t i = 0;
+		if(this->B) 	chcount[_B] = i++;
+		if(this->G) 	chcount[_G] = i++;
+		if(this->R) 	chcount[_R] = i++;
+	}
+
+	size_t nbit 		= this->n_least_significant_bit;//número de bits menos significativos
+	size_t nch 		= this->n_channels; 		//número de canais
+	unsigned int n_byte 	= 0;				//número de caracteres na imagem
+
+	//Lê quantos caracteres existem pra ser lidos na imagem
+	for(size_t ibit=0; ibit<N_BIT_FOR_NCHARACTER; ibit++){
+		//Calcula valores de acordo com o ibit
+		size_t lin 	= ibit/(nbit*nch*s.img.cols);
+		size_t col 	= (ibit/(nch*nbit))%s.img.cols;
+		size_t ch  	= ibit%nch;
+		size_t bit_pos 	= ibit%nbit;
+		BGR channel;
+
+		if(this->B && (ch == chcount[_B]))
+			channel = _B;
+
+		else if(this->G && (ch == chcount[_G]))
+			channel = _G;
+
+		else channel = _R;
+		
+		//read bit
+		int b = read_bit(s.img, lin, col, channel, nbit - (bit_pos+1));
+
+		//put bit in n_bytes
+		if(b)
+			n_byte |= (1 << ((N_BIT_FOR_NCHARACTER) - ibit));
+		//se o bit for 0
+		else
+			n_byte &= ~(1 << ((N_BIT_FOR_NCHARACTER) - ibit));
+
+	}
+
+	if(this->verbose)
+		cout << "Has " << n_byte << " bytes hidden in the image..." << endl;
+	if(n_byte > s.n_character){
+		return XERROR_TOO_MANY_BYTES;
+	}
+
+
+	return XERROR_NO_ERROR;
+}
+
+/**********************************************************
+ * Função X
+ * --------------------------------------------------------
+ * ********************************************************/
 void Stegim::x(Steg& s){
 	DEBUG("", 2);
 	if(!default_steg_inicialize(s, "w")) return;
-	cout << "x (" << s.image_name << ")" << endl;
+
+	if(!s.file_name.size()){
+		s.file = stdout;
+		s.file_name = "Standard output";
+	}
+
+	if(this->verbose)
+		cout << "x (" << s.image_name << " - image ) -> " << s.file_name << endl;
+
+	if(X_ERROR error = extract_text_from_image(s)){
+		if(error == XERROR_TOO_MANY_BYTES){
+			cerr << "ERROR: The number of the bytes is too big. " << endl
+			<<	"Maybe nothing is hidden in the image." << endl;
+		}
+
+		return;
+	}
+
 }
 
 #endif //_STEGIM_HPP_
