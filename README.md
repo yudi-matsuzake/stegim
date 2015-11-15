@@ -1,4 +1,4 @@
 # stegim
 --------
 
-Simple tool to hide ascii text in images.
+Simple tool to hide data in images.
