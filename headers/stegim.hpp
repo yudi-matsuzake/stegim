@@ -528,7 +528,8 @@ X_ERROR Stegim::extract_text_from_image(Steg& s){
 	unsigned int n_byte 	= 0;				//número de caracteres na imagem
 
 	//Lê quantos caracteres existem pra ser lidos na imagem
-	for(size_t ibit=0; ibit<N_BIT_FOR_NCHARACTER; ibit++){
+	size_t ibit;
+	for(ibit=0; ibit<N_BIT_FOR_NCHARACTER; ibit++){
 		//Calcula valores de acordo com o ibit
 		size_t lin 	= ibit/(nbit*nch*s.img.cols);
 		size_t col 	= (ibit/(nch*nbit))%s.img.cols;
@@ -556,12 +557,62 @@ X_ERROR Stegim::extract_text_from_image(Steg& s){
 
 	}
 
-	if(this->verbose)
-		cout << "Has " << n_byte << " bytes hidden in the image..." << endl;
 	if(n_byte > s.n_character){
 		return XERROR_TOO_MANY_BYTES;
 	}
 
+	if(this->verbose)
+		cout << "Has " << n_byte << " bytes hidden in the image..." << endl;
+
+	size_t n_data_read = 0;
+	unsigned char buffer[BUFFER_SIZE];
+	//extrai dados da imagem e escreve no arquivo de saída
+	//para todo byte existente...
+	while(n_byte--){
+		unsigned char newbyte = 0;
+
+		for(int i=0; i<CHAR_BIT; i++){
+			//Calcula valores de acordo com o ibit
+			size_t lin 	= ibit/(nbit*nch*s.img.cols);
+			size_t col 	= (ibit/(nch*nbit))%s.img.cols;
+			size_t ch  	= ibit%nch;
+			size_t bit_pos 	= ibit%nbit;
+			
+			BGR channel;
+			if(this->B && (ch == chcount[_B]))
+				channel = _B;
+
+			else if(this->G && (ch == chcount[_G]))
+				channel = _G;
+
+			else channel = _R;
+			
+			//read bit
+			unsigned char b = read_bit(s.img, lin, col, channel, nbit - (bit_pos+1));
+			
+			//put bit in the new byte
+			if(b)
+				newbyte |= (1 << ((CHAR_BIT) - (i+1)));
+			//se o bit for 0
+			else
+				newbyte &= ~(1 << ((CHAR_BIT) - (i+1)));
+
+
+			//increment the number of bit
+			ibit++;
+		}
+
+		buffer[n_data_read] = newbyte;
+
+		n_data_read++;
+		if(n_data_read == BUFFER_SIZE){
+			fwrite(buffer, sizeof(unsigned char), n_data_read, s.file);
+			n_data_read = 0;
+		}
+	}
+
+	//termina de escrever o que ficou no buffer
+	if(n_data_read) fwrite(buffer, sizeof(unsigned char), n_data_read, s.file);
 
 	return XERROR_NO_ERROR;
 }
