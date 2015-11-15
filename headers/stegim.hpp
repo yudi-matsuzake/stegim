@@ -558,6 +558,8 @@ X_ERROR Stegim::extract_text_from_image(Steg& s){
 	}
 
 	if(n_byte > s.n_character){
+		cerr << "Bytes: " << n_byte << endl;
+		cerr << "Characters: " << s.n_character << endl; 
 		return XERROR_TOO_MANY_BYTES;
 	}
 
